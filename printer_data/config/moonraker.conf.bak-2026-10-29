@@ -1,0 +1,149 @@
+# Moonraker Configuration
+# Migriert von voron (alt, /home/pi) -> voron (neu, /home/dominik), 2026-10-25
+# Quelle: MyVoronBackup @ a3e672e
+
+[server]
+host: 0.0.0.0
+port: 7125
+max_upload_size: 1024
+# ALT war: /home/pi/printer_data/comms/klippy.sock
+klippy_uds_address: /home/dominik/printer_data/comms/klippy.sock
+
+[machine]
+provider: systemd_dbus
+
+[file_manager]
+enable_object_processing: False
+
+[authorization]
+cors_domains:
+    https://my.mainsail.xyz
+    https://voron.tail8e7573.ts.net
+    http://my.mainsail.xyz
+    http://*.local
+    http://*.lan
+trusted_clients:
+    10.0.0.0/8
+    127.0.0.0/8
+    169.254.0.0/16
+    172.16.0.0/12
+    192.168.0.0/16
+    FE80::/10
+    ::1/128
+    voron.tail8e7573.ts.net
+
+# --- Stromversorgung: GPIO 23/24, Relais-Modul ist active-low (! = invertiert) ---
+# ACHTUNG: off_when_shutdown greift bei KLIPPY-Shutdown, nicht erst beim Pi-Shutdown.
+[power Drucker]
+type: gpio
+pin: !gpio23
+initial_state: off
+off_when_shutdown: True
+locked_while_printing: True
+
+[power Reserve]
+type: gpio
+pin: !gpio24
+initial_state: off
+off_when_shutdown: True
+locked_while_printing: True
+
+[octoprint_compat]
+
+[history]
+
+[announcements]
+subscriptions:
+    mainsail
+
+[update_manager]
+refresh_interval: 168
+enable_auto_refresh: True
+
+[spoolman]
+server: http://10.10.10.219:7912
+
+# --- Kamera: crowsnest/ustreamer auf 127.0.0.1:8080, Moonraker proxied nach /webcam/ ---
+[webcam Voron]
+location: printer
+enabled: True
+service: mjpegstreamer
+stream_url: http://127.0.0.1:8080/?action=stream
+snapshot_url: http://127.0.0.1:8080/?action=snapshot
+target_fps: 15
+
+[timelapse]
+output_path: ~/timelapse/
+ffmpeg_binary_path: /usr/bin/ffmpeg
+
+[mmu_server]
+enable_file_preprocessor: True
+enable_toolchange_next_pos: True
+update_spoolman_location: True
+
+[update_manager mainsail]
+type: web
+channel: stable
+repo: mainsail-crew/mainsail
+path: ~/mainsail
+
+[update_manager mainsail-config]
+type: git_repo
+primary_branch: master
+path: ~/mainsail-config
+origin: https://github.com/mainsail-crew/mainsail-config.git
+managed_services: klipper
+
+[update_manager timelapse]
+type: git_repo
+primary_branch: main
+path: ~/moonraker-timelapse
+origin: https://github.com/mainsail-crew/moonraker-timelapse.git
+managed_services: klipper moonraker
+
+[update_manager crowsnest]
+type: git_repo
+path: ~/crowsnest
+origin: https://github.com/mainsail-crew/crowsnest.git
+managed_services: crowsnest
+
+[update_manager cartographer]
+type: git_repo
+path: ~/cartographer-klipper
+channel: stable
+origin: https://github.com/Cartographer3D/cartographer-klipper.git
+is_system_service: False
+managed_services: klipper
+info_tags:
+  desc=Cartographer Probe
+
+[update_manager klipper-backup]
+type: git_repo
+path: ~/klipper-backup
+origin: https://github.com/Staubgeborener/klipper-backup.git
+managed_services: moonraker
+primary_branch: main
+
+[update_manager happy-hare]
+type: git_repo
+path: ~/Happy-Hare
+origin: https://github.com/moggieuk/Happy-Hare.git
+primary_branch: v3
+managed_services: klipper
+
+[update_manager sonar]
+type: git_repo
+path: ~/sonar
+origin: https://github.com/mainsail-crew/sonar.git
+primary_branch: main
+managed_services: sonar
+install_script: tools/install.sh
+
+[update_manager KlipperScreen]
+type: git_repo
+path: ~/KlipperScreen
+origin: https://github.com/moggieuk/KlipperScreen-Happy-Hare-Edition.git
+env: ~/.KlipperScreen-env/bin/python
+requirements: scripts/KlipperScreen-requirements.txt
+install_script: scripts/KlipperScreen-install.sh
+managed_services: KlipperScreen
